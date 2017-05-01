@@ -1,0 +1,83 @@
+package execute;
+
+import java.io.IOException;
+import java.util.HashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import j.u.Log;
+
+import com.liequ.rabbitmq.QueueMessageHandler;
+import com.liequ.rabbitmq.pool.ConnectionManager;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.QueueingConsumer;
+
+public class TaskDetail implements Runnable {
+	private static Logger log = LoggerFactory.getLogger(TaskDetail.class);
+
+	private  ConnectionManager connectionManager = null;
+
+	private final String brokerName;
+	private final String queueName;
+	private final String className;
+	private boolean queueDurable;
+	private boolean autoAck;
+	private boolean exclusive;
+	private boolean autoDelete;
+	private int workThreadNum;
+	private QueueMessageHandler handler;
+	private Channel channel;
+	private HashMap<String, Object> queueArguments;
+	
+	public TaskDetail(JobConfig _config){
+		this.connectionManager = ConnectionManager.getInstance();
+		this.workThreadNum = _config.getWorkThreadNum();
+		this.brokerName = _config.getBrokerName();
+		this.queueName = _config.getQueueName();
+		this.exclusive = _config.isExclusive();
+		this.autoAck = _config.isAutoAck();
+		this.className = _config.getClassName();
+		this.autoDelete = _config.isAutoDelete();
+		this.queueArguments = _config.getQueueArguments();
+	}
+	
+	
+	public void init() throws Exception {
+		initMessageHandler();
+		channel = connectionManager.getChannel(brokerName);
+		channel.basicQos(1);
+		handler.extendChannel(channel);
+		channel.queueDeclare(queueName, queueDurable, exclusive, autoDelete, queueArguments);
+	}
+	
+	
+	public void startTask() throws IOException{
+		QueueingConsumer consumer = new QueueingConsumer(channel);
+		for (int i = 0; i < workThreadNum; i++) {
+			TaskThread thread = new TaskThread(consumer, handler, autoAck, queueName);
+			new Thread(thread).start();
+		}
+	}
+	
+	public void run() { 
+		try {
+			init();
+			startTask();
+		} catch (Exception e) {
+			log.error("error", e);
+		}
+	}
+
+	public  void initMessageHandler() {
+		try {
+			handler = (QueueMessageHandler) Class.forName(className).newInstance();
+		} catch (InstantiationException e) {
+			Log.severe(e);
+		} catch (IllegalAccessException e) {
+			Log.severe(e);
+		} catch (ClassNotFoundException e) {
+			Log.severe(e);
+		}
+	}
+}
