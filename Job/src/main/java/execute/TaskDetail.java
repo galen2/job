@@ -27,7 +27,7 @@ public class TaskDetail implements Runnable {
 	private boolean autoDelete;
 	private int workThreadNum;
 	private QueueMessageHandler handler;
-	private Channel channel;
+//	private Channel channel;
 	private HashMap<String, Object> queueArguments;
 	
 	public TaskDetail(JobConfig _config){
@@ -43,16 +43,18 @@ public class TaskDetail implements Runnable {
 	}
 	
 	
-	public void init() throws Exception {
-		initMessageHandler();
-		channel = connectionManager.getChannel(brokerName);
-		channel.basicQos(1);
-		handler.extendChannel(channel);
-		channel.queueDeclare(queueName, queueDurable, exclusive, autoDelete, queueArguments);
+	
+	private void startTaskNoAck() throws Exception{
+		for (int i = 0; i < workThreadNum; i++) {
+			Channel channel = createChannel();
+			QueueingConsumer consumer = new QueueingConsumer(channel);
+			TaskThread thread = new TaskThread(consumer, handler, autoAck, queueName);
+			new Thread(thread).start();
+		}
 	}
-	
-	
-	public void startTask() throws IOException{
+
+	private void startTaskAutoAck() throws Exception{
+		Channel channel = createChannel();
 		QueueingConsumer consumer = new QueueingConsumer(channel);
 		for (int i = 0; i < workThreadNum; i++) {
 			TaskThread thread = new TaskThread(consumer, handler, autoAck, queueName);
@@ -60,10 +62,22 @@ public class TaskDetail implements Runnable {
 		}
 	}
 	
+	private Channel createChannel() throws Exception{
+		Channel channel = connectionManager.getChannel(brokerName);
+		channel.basicQos(1);
+		handler.extendChannel(channel);
+		channel.queueDeclare(queueName, queueDurable, exclusive, autoDelete, queueArguments);
+		return channel;
+	}
+	
 	public void run() { 
 		try {
-			init();
-			startTask();
+			initMessageHandler();
+			if (autoAck) {
+				startTaskAutoAck();
+			} else {
+				startTaskNoAck();
+			}
 		} catch (Exception e) {
 			log.error("error", e);
 		}
