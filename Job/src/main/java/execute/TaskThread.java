@@ -1,46 +1,86 @@
 package execute;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.liequ.rabbitmq.QueueMessageHandler;
+import com.liequ.rabbitmq.pool.ConnectionManager;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
 import com.rabbitmq.client.ShutdownSignalException;
 
-public class TaskThread implements Runnable{
+public class TaskThread extends Thread {
+	private static Logger log = LoggerFactory.getLogger(TaskThread.class);
+	private QueueingConsumer _consumer = null;
+	private String queueName;
+	private TaskManager manager = null;
+	private final String brokerName;
+	private boolean queueDurable;
+	private boolean autoAck;
+	private boolean exclusive;
+	private boolean autoDelete;
+	private QueueMessageHandler _handler;
 
-	private  QueueingConsumer _consumer = null;
-	private QueueMessageHandler _handler = null;
-//	private JobConfig config;
-	private boolean autoAck ; 
-	private String queueName ; 
-	public TaskThread(QueueingConsumer consumer, QueueMessageHandler handler,boolean autoAck,String queueName ){
-		this._consumer = consumer;
+	private  ConnectionManager connectionManager = null;
+	public TaskThread(ConnectionManager connectionManager,
+			JobConfig _config, QueueMessageHandler handler,TaskManager manager) {
+		this.manager = manager;
+		this.brokerName = _config.getBrokerName();
+		this.queueName = _config.getQueueName();
+		this.exclusive = _config.isExclusive();
+		this.autoAck = _config.isAutoAck();
+		this.autoDelete = _config.isAutoDelete();
 		this._handler = handler;
-		this.autoAck = autoAck;
-		this.queueName = queueName;
 	}
 
-	public void start() throws IOException{
-		Channel channel = _consumer.getChannel();
-		channel.basicConsume(queueName, autoAck,_consumer);
+	
+	public void consumer() throws Exception {
+		Channel channel = connectionManager.getChannel(brokerName);
+		channel.basicQos(1);
+		Map<String, Object> queueArguments = new HashMap<String, Object>();
+		_handler.initArgument(channel,queueArguments);
+		channel.queueDeclare(queueName, queueDurable, exclusive, autoDelete, queueArguments);
+		channel.basicConsume(queueName, autoAck, _consumer);
+	}
+
+	public  void startWork () throws Exception{
+		consumer();
+		super.start();
 	}
 	public void run() {
-		while (true) {
-			try {
-				Delivery delivery =  _consumer.nextDelivery();
+		try {
+			while (true) {
+				Delivery delivery = _consumer.nextDelivery();
 				_handler.consumer(delivery);
-				if (!autoAck){
+				if (!autoAck) {
 					_handler.basicAck(delivery);
 				}
-			} catch (ShutdownSignalException e) {
-				e.printStackTrace();
-			} catch (ConsumerCancelledException e) {
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			}
+		} catch (ShutdownSignalException e) {
+			log.error(e.getMessage());
+		} catch (ConsumerCancelledException e) {
+			log.error(e.getMessage());
+		} catch (InterruptedException e) {
+			log.error(e.getMessage());
+		}  finally {
+			try {
+				_consumer.getChannel().close();
+				try {
+					manager.startNewWorkThrad();
+				} catch (Exception e) {
+					log.error("open a new task fail When the thread exits", e);
+				}
+			} catch (IOException e) {
+				log.error(e.getMessage());
+			} catch (TimeoutException e) {
+				log.error(e.getMessage());
 			}
 		}
 	}

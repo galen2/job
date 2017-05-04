@@ -16,7 +16,6 @@ public class JobConfig {
 	private int workThreadNum;
 	private boolean exclusive;
 	private boolean autoDelete = false;
-	private HashMap<String, Object> queueArguments ;
 
 	public static  ArrayList<JobConfig> parseJobConfig() throws ConfigException{
 		ArrayList<JobConfig> configs = new ArrayList<JobConfig>(4);
@@ -117,11 +116,5 @@ public class JobConfig {
 	public boolean isAutoDelete() {
 		return autoDelete;
 	}
-
-
-	public HashMap<String, Object> getQueueArguments() {
-		return queueArguments;
-	}
-
 	
 }

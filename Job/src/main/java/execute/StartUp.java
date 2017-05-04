@@ -15,7 +15,7 @@ public class StartUp {
 		try {
 			ArrayList<JobConfig> configs = JobConfig.parseJobConfig();
 			for (JobConfig config : configs) {
-				TaskDetail task = new TaskDetail(config);
+				TaskManager task = new TaskManager(config);
 				new Thread(task).start();
 			}
 		} catch (ConfigException e) {
