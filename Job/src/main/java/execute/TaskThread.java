@@ -63,13 +63,15 @@ public class TaskThread extends Thread {
 					_handler.basicAck(delivery);
 				}
 			}
-		} catch (ShutdownSignalException e) {
+		} catch (ShutdownSignalException 
+					|ConsumerCancelledException
+						|InterruptedException e) {
 			log.error(e.getMessage());
-		} catch (ConsumerCancelledException e) {
+		} /*catch (ConsumerCancelledException e) {
 			log.error(e.getMessage());
 		} catch (InterruptedException e) {
 			log.error(e.getMessage());
-		}  finally {
+		}*/  finally {
 			try {
 				_consumer.getChannel().close();
 				try {
@@ -77,11 +79,9 @@ public class TaskThread extends Thread {
 				} catch (Exception e) {
 					log.error("open a new task fail When the thread exits", e);
 				}
-			} catch (IOException e) {
+			} catch (IOException | TimeoutException e) {
 				log.error(e.getMessage());
-			} catch (TimeoutException e) {
-				log.error(e.getMessage());
-			}
+			} 
 		}
 	}
 }
