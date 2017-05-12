@@ -1,15 +1,13 @@
 package execute;
 
-import j.u.Log;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liequ.rabbitmq.ConnectionManager;
 import com.liequ.rabbitmq.QueueMessageHandler;
-import com.liequ.rabbitmq.pool.ConnectionManager;
 
 public class TaskManager implements Runnable {
-	private static Logger log = LoggerFactory.getLogger(TaskManager.class);
+	private static Logger LOG = LoggerFactory.getLogger(TaskManager.class);
 
 	private  ConnectionManager connectionManager = null;
 	private final String className;
@@ -41,7 +39,7 @@ public class TaskManager implements Runnable {
 			initMessageHandler();
 			startTask();
 		} catch (Exception e) {
-			log.error("error", e);
+			LOG.error("error", e);
 		}
 	}
 
@@ -49,11 +47,11 @@ public class TaskManager implements Runnable {
 		try {
 			_handler = (QueueMessageHandler) Class.forName(className).newInstance();
 		} catch (InstantiationException e) {
-			Log.severe(e);
+			LOG.error("ERROR",e);
 		} catch (IllegalAccessException e) {
-			Log.severe(e);
+			LOG.error("ERROR",e);
 		} catch (ClassNotFoundException e) {
-			Log.severe(e);
+			LOG.error("ERROR",e);
 		}
 	}
 }

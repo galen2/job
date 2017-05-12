@@ -19,9 +19,12 @@ public class orderCore implements QueueMessageHandler{
 		
 	}
 
-	public void initArgument(Channel channel, Map<String, Object> queueArguments) {
+	@Override
+	public void queueDeclare(Channel channel, String queueName,
+			Map<String, Object> queueArguments) {
 		// TODO Auto-generated method stub
 		
 	}
+
 	
 }

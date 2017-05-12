@@ -11,11 +11,11 @@ public class JobConfig {
 	private String brokerName;
 	private String queueName;
 	private String className;
-	private boolean queueDurable;
+//	private boolean queueDurable;
 	private boolean autoAck;
 	private int workThreadNum;
-	private boolean exclusive;
-	private boolean autoDelete = false;
+//	private boolean exclusive;
+//	private boolean autoDelete = false;
 
 	public static  ArrayList<JobConfig> parseJobConfig() throws ConfigException{
 		ArrayList<JobConfig> configs = new ArrayList<JobConfig>(4);
@@ -48,11 +48,11 @@ public class JobConfig {
 			}
 			confg.className = cname;
 			
-			String qd = prop.getProperty(handler+".queueDurable");
+		/*	String qd = prop.getProperty(handler+".queueDurable");
 			if (qd == null){
 				throw new ConfigException(handler+".queueDurable"+" must be seted");
 			}
-			confg.queueDurable = Boolean.valueOf(qd);
+			confg.queueDurable = Boolean.valueOf(qd);*/
 			
 			String _autoAck = prop.getProperty(handler+".autoAck");
 			if (_autoAck == null){
@@ -60,11 +60,11 @@ public class JobConfig {
 			}
 			confg.autoAck = Boolean.valueOf(_autoAck);
 			
-			String _exclusive = prop.getProperty(handler+".exclusive");
+			/*String _exclusive = prop.getProperty(handler+".exclusive");
 			if (_exclusive == null){
 				throw new ConfigException(handler+".exclusive"+" must be seted");
 			}
-			confg.exclusive = Boolean.valueOf(_exclusive);
+			confg.exclusive = Boolean.valueOf(_exclusive);*/
 			
 			String _workThreadNum = prop.getProperty(handler+".workThreadNum");
 			if (_workThreadNum == null){
@@ -78,9 +78,9 @@ public class JobConfig {
 	}
 
 
-	public boolean isExclusive() {
+/*	public boolean isExclusive() {
 		return exclusive;
-	}
+	}*/
 
 
 	public int getWorkThreadNum() {
@@ -108,13 +108,13 @@ public class JobConfig {
 	}
 
 
-	public Boolean getQueueDurable() {
+	/*public Boolean getQueueDurable() {
 		return queueDurable;
 	}
 
 
 	public boolean isAutoDelete() {
 		return autoDelete;
-	}
+	}*/
 	
 }

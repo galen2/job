@@ -8,8 +8,8 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.liequ.rabbitmq.ConnectionManager;
 import com.liequ.rabbitmq.QueueMessageHandler;
-import com.liequ.rabbitmq.pool.ConnectionManager;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.QueueingConsumer;
@@ -22,10 +22,7 @@ public class TaskThread extends Thread {
 	private String queueName;
 	private TaskManager manager = null;
 	private final String brokerName;
-	private boolean queueDurable;
 	private boolean autoAck;
-	private boolean exclusive;
-	private boolean autoDelete;
 	private QueueMessageHandler _handler;
 
 	private  ConnectionManager connectionManager = null;
@@ -34,9 +31,7 @@ public class TaskThread extends Thread {
 		this.manager = manager;
 		this.brokerName = _config.getBrokerName();
 		this.queueName = _config.getQueueName();
-		this.exclusive = _config.isExclusive();
 		this.autoAck = _config.isAutoAck();
-		this.autoDelete = _config.isAutoDelete();
 		this._handler = handler;
 	}
 
@@ -45,8 +40,7 @@ public class TaskThread extends Thread {
 		Channel channel = connectionManager.getChannel(brokerName);
 		channel.basicQos(1);
 		Map<String, Object> queueArguments = new HashMap<String, Object>();
-		_handler.initArgument(channel,queueArguments);
-		channel.queueDeclare(queueName, queueDurable, exclusive, autoDelete, queueArguments);
+		_handler.queueDeclare(channel, queueName, queueArguments);
 		channel.basicConsume(queueName, autoAck, _consumer);
 	}
 
@@ -67,11 +61,7 @@ public class TaskThread extends Thread {
 					|ConsumerCancelledException
 						|InterruptedException e) {
 			log.error(e.getMessage());
-		} /*catch (ConsumerCancelledException e) {
-			log.error(e.getMessage());
-		} catch (InterruptedException e) {
-			log.error(e.getMessage());
-		}*/  finally {
+		} finally {
 			try {
 				_consumer.getChannel().close();
 				try {

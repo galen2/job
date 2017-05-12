@@ -25,6 +25,4 @@ public class StartUp {
 			log.error("error", e);
 		}
 	}
-	
-	
 }
