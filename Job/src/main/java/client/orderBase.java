@@ -6,7 +6,7 @@ import com.liequ.rabbitmq.ConsumerMessageHandler;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
 
-public class orderCore implements ConsumerMessageHandler{
+public class orderBase implements ConsumerMessageHandler{
 
 
 	public void consumer(Delivery delivery) {

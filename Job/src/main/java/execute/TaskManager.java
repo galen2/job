@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liequ.rabbitmq.ConnectionManager;
-import com.liequ.rabbitmq.QueueMessageHandler;
+import com.liequ.rabbitmq.ConsumerMessageHandler;
 
 public class TaskManager implements Runnable {
 	private static Logger LOG = LoggerFactory.getLogger(TaskManager.class);
@@ -12,7 +12,7 @@ public class TaskManager implements Runnable {
 	private  ConnectionManager connectionManager = null;
 	private final String className;
 	private int workThreadNum;
-	private QueueMessageHandler _handler = null;
+	private ConsumerMessageHandler _handler = null;
 	private unCaughtExceptionHandler unCaughtExceptionHandler = new unCaughtExceptionHandler();
 	private JobConfig _config = null;
 	public TaskManager(JobConfig config){
@@ -45,7 +45,7 @@ public class TaskManager implements Runnable {
 
 	public  void initMessageHandler() {
 		try {
-			_handler = (QueueMessageHandler) Class.forName(className).newInstance();
+			_handler = (ConsumerMessageHandler) Class.forName(className).newInstance();
 		} catch (InstantiationException e) {
 			LOG.error("ERROR",e);
 		} catch (IllegalAccessException e) {

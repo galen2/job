@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liequ.rabbitmq.ConnectionManager;
-import com.liequ.rabbitmq.QueueMessageHandler;
+import com.liequ.rabbitmq.ConsumerMessageHandler;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.QueueingConsumer;
@@ -23,11 +23,11 @@ public class TaskThread extends Thread {
 	private TaskManager manager = null;
 	private final String brokerName;
 	private boolean autoAck;
-	private QueueMessageHandler _handler;
+	private ConsumerMessageHandler _handler;
 
 	private  ConnectionManager connectionManager = null;
 	public TaskThread(ConnectionManager connectionManager,
-			JobConfig _config, QueueMessageHandler handler,TaskManager manager) {
+			JobConfig _config, ConsumerMessageHandler handler,TaskManager manager) {
 		this.manager = manager;
 		this.brokerName = _config.getBrokerName();
 		this.queueName = _config.getQueueName();
