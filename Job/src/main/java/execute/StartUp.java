@@ -9,7 +9,7 @@ import com.liequ.rabbitmq.exception.ConfigException;
 
 
 public class StartUp {
-	private static Logger log = LoggerFactory.getLogger(StartUp.class);
+	private static Logger LOG = LoggerFactory.getLogger(StartUp.class);
 
 	public static void main(String[] args) {
 		try {
@@ -19,10 +19,14 @@ public class StartUp {
 				new Thread(task).start();
 			}
 		} catch (ConfigException e) {
-			log.error("configError", e);
-			e.printStackTrace();
+			LOG.error("Invalid config, exiting abnormally", e);
+            System.err.println("Invalid config, exiting abnormally");
+            System.exit(2);
 		} catch (Exception e) {
-			log.error("error", e);
+			LOG.error("Unexpected exception, exiting abnormally", e);
+            System.exit(1);
 		}
+//		LOG.info("Exiting normally");
+//	    System.exit(0);
 	}
 }

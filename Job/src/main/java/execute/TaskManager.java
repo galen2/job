@@ -31,9 +31,10 @@ public class TaskManager implements Runnable {
 	public void startNewWorkThrad() throws Exception{
 		TaskThread thread = new TaskThread(connectionManager, _config,_handler,this);
 		Thread.setDefaultUncaughtExceptionHandler(unCaughtExceptionHandler);
-		thread.startWork();
+		thread.startUp();
 	}
 
+	@Override
 	public void run() { 
 		try {
 			initMessageHandler();

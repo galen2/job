@@ -8,31 +8,25 @@ import junit.framework.TestSuite;
  * Unit test for simple App.
  */
 public class AppTest 
-    extends TestCase
 {
-    /**
-     * Create the test case
-     *
-     * @param testName name of the test case
-     */
-    public AppTest( String testName )
-    {
-        super( testName );
-    }
+	public static void run(){
+		System.out.println("run begin");
 
-    /**
-     * @return the suite of tests being tested
-     */
-    public static Test suite()
-    {
-        return new TestSuite( AppTest.class );
-    }
+		two();
+		System.out.println("run end");
 
-    /**
-     * Rigourous Test :-)
-     */
-    public void testApp()
-    {
-        assertTrue( true );
-    }
+	}
+	public static void two(){
+		System.out.println("two begin");
+		three();
+		System.out.println("two end");
+	}
+	public static void three(){
+		System.exit(3);
+		System.out.println("three");
+	}
+	
+	public static void main(String[] args) {
+		run();
+	}
 }

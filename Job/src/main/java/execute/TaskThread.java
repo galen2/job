@@ -28,6 +28,7 @@ public class TaskThread extends Thread {
 	private  ConnectionManager connectionManager = null;
 	public TaskThread(ConnectionManager connectionManager,
 			JobConfig _config, ConsumerMessageHandler handler,TaskManager manager) {
+		this.connectionManager = connectionManager;
 		this.manager = manager;
 		this.brokerName = _config.getBrokerName();
 		this.queueName = _config.getQueueName();
@@ -41,10 +42,11 @@ public class TaskThread extends Thread {
 		channel.basicQos(1);
 		Map<String, Object> queueArguments = new HashMap<String, Object>();
 		_handler.queueDeclare(channel, queueName, queueArguments);
+		_consumer = new QueueingConsumer(channel);
 		channel.basicConsume(queueName, autoAck, _consumer);
 	}
 
-	public  void startWork () throws Exception{
+	public  void startUp () throws Exception{
 		consumer();
 		super.start();
 	}
