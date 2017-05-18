@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liequ.rabbitmq.ConnectionManager;
-import com.liequ.rabbitmq.ConsumerMessageHandler;
 
 public class TaskManager implements Task {
 	private static Logger LOG = LoggerFactory.getLogger(TaskManager.class);

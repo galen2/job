@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liequ.rabbitmq.ConnectionManager;
-import com.liequ.rabbitmq.ConsumerMessageHandler;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.GetResponse;
 

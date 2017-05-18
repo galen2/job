@@ -6,14 +6,11 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.liequ.rabbitmq.ConsumerMessageHandler;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.GetResponse;
-import com.rabbitmq.client.ShutdownSignalException;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
 
-import execute.TaskManager;
+import execute.ConsumerMessageHandler;
 
 public class orderCore implements ConsumerMessageHandler{
 	private static Logger LOG = LoggerFactory.getLogger(orderCore.class);

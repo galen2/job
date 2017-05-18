@@ -3,10 +3,10 @@ package client;
 import java.io.IOException;
 import java.util.Map;
 
-import com.liequ.rabbitmq.ConsumerMessageHandler;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.GetResponse;
-import com.rabbitmq.client.QueueingConsumer.Delivery;
+
+import execute.ConsumerMessageHandler;
 
 public class orderBase implements ConsumerMessageHandler{
 
