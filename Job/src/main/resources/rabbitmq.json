@@ -1,0 +1,22 @@
+{
+    "brokerNameOne":{
+        "userName":"tonyg",
+        "passsWord":"changeit",
+        "virtualHost":"/tonyg",
+         "initialSize":"1",
+        "maxConnTotal":"2",
+        "maxChannelCountPerConn":"8",
+        "maxWaitMillis":"2000",
+        "blockWhenExhausted":"true",
+        "server":"localhost:5672,localhost:5672"
+    },
+   "brokerNameTwo":{
+        "userName":"tonyg",
+        "passsWord":"changeit",
+        "virtualHost":"/tonyg",
+        "maxConnTotal":"2",
+        "initialSize":"1",
+        "maxChannelCountPerConn":"8",
+        "server":"localhost:5672,localhost:5672"
+    }
+}

@@ -3,7 +3,9 @@ package execute;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,69 +13,100 @@ import org.slf4j.LoggerFactory;
 import com.liequ.rabbitmq.ConnectionManager;
 import com.liequ.rabbitmq.ConsumerMessageHandler;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConsumerCancelledException;
-import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.QueueingConsumer.Delivery;
-import com.rabbitmq.client.ShutdownSignalException;
+import com.rabbitmq.client.GetResponse;
 
-public class TaskThread extends Thread {
-	private static Logger log = LoggerFactory.getLogger(TaskThread.class);
-	private QueueingConsumer _consumer = null;
+public class TaskThread extends Thread implements Task {
+	private static Logger LOG = LoggerFactory.getLogger(TaskThread.class);
 	private String queueName;
-	private TaskManager manager = null;
 	private final String brokerName;
-	private boolean autoAck;
+	private final boolean autoAck;
 	private ConsumerMessageHandler _handler;
-
+	private volatile boolean stop = false;
+	private Channel channel = null;
+	private  CountDownLatch _latch = null;
 	private  ConnectionManager connectionManager = null;
+	private AtomicInteger nackNum = new AtomicInteger();
+	private final Object lockObject = new Object();
 	public TaskThread(ConnectionManager connectionManager,
-			JobConfig _config, ConsumerMessageHandler handler,TaskManager manager) {
+			JobConfig _config, ConsumerMessageHandler handler,final CountDownLatch latch) {
 		this.connectionManager = connectionManager;
-		this.manager = manager;
+//		this.manager = manager;
 		this.brokerName = _config.getBrokerName();
 		this.queueName = _config.getQueueName();
 		this.autoAck = _config.isAutoAck();
 		this._handler = handler;
+		this._latch = latch;
 	}
-
 	
-	public void consumer() throws Exception {
-		Channel channel = connectionManager.getChannel(brokerName);
+	public void init() throws Exception {
+		channel = connectionManager.getChannel(brokerName);
 		channel.basicQos(1);
 		Map<String, Object> queueArguments = new HashMap<String, Object>();
 		_handler.queueDeclare(channel, queueName, queueArguments);
-		_consumer = new QueueingConsumer(channel);
-		channel.basicConsume(queueName, autoAck, _consumer);
 	}
 
-	public  void startUp () throws Exception{
-		consumer();
+	@Override
+	public  void startUp () throws Exception {
+		init();
 		super.start();
+		iniyMessageRecover();
 	}
-	public void run() {
-		try {
-			while (true) {
-				Delivery delivery = _consumer.nextDelivery();
-				_handler.consumer(delivery);
-				if (!autoAck) {
-					_handler.basicAck(delivery);
+	
+	public void iniyMessageRecover(){
+		Thread monitor = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				try {
+					lockObject.wait();
+				} catch (InterruptedException e) {
+					LOG.warn(e.getMessage());
+				}
+				
+				if (nackNum.get() > 0) {
+					try {
+						channel.basicRecover();
+					} catch (IOException e) {
+						LOG.warn(e.getMessage());
+					}
 				}
 			}
-		} catch (ShutdownSignalException 
-					|ConsumerCancelledException
-						|InterruptedException e) {
-			log.error(e.getMessage());
-		} finally {
+		});
+		monitor.setDaemon(true);
+		monitor.start();
+	}
+	
+	public void run() {
+		while (!stop) {
 			try {
-				_consumer.getChannel().close();
-				try {
-					manager.startNewWorkThrad();
-				} catch (Exception e) {
-					log.error("open a new task fail When the thread exits", e);
+				GetResponse response = channel.basicGet(queueName, autoAck);
+				boolean result = _handler.consumer(response);
+				if (!autoAck) { 
+					if (result) {
+						channel.basicAck(response.getEnvelope().getDeliveryTag(), false);
+					} else {
+						nackNum.incrementAndGet();
+						lockObject.notify();
+					}
 				}
-			} catch (IOException | TimeoutException e) {
-				log.error(e.getMessage());
+			} catch (Exception e) {
+				LOG.error(e.getMessage());
 			} 
 		}
+		
+		if (_latch !=null) {
+			_latch.countDown();
+		}
+		try {
+			channel.close();
+		} catch (IOException |TimeoutException e) {
+			LOG.error("channel closed error", e);
+		} 
 	}
+
+	@Override
+	public void shutDown() {
+		stop = true;
+	}
+	
 }

@@ -1,6 +1,5 @@
 package execute;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Properties;
 
 import com.liequ.rabbitmq.exception.ConfigException;
@@ -14,6 +13,7 @@ public class JobConfig {
 //	private boolean queueDurable;
 	private boolean autoAck;
 	private int workThreadNum;
+	private static int totalWorkThreadNum;
 //	private boolean exclusive;
 //	private boolean autoDelete = false;
 
@@ -71,7 +71,7 @@ public class JobConfig {
 				throw new ConfigException(handler+".workThreadNum"+" must be seted");
 			}
 			confg.workThreadNum = Integer.valueOf(_workThreadNum);
-			
+			totalWorkThreadNum += confg.workThreadNum;
 			configs.add(confg);
 		}
 		return configs;
@@ -85,6 +85,11 @@ public class JobConfig {
 
 	public int getWorkThreadNum() {
 		return workThreadNum;
+	}
+
+
+	public static int getTotalWorkThreadNum() {
+		return totalWorkThreadNum;
 	}
 
 
