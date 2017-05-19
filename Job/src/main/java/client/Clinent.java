@@ -1,19 +1,33 @@
 package client;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.LinkedList;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Clinent {
 	private static Logger LOG = LoggerFactory.getLogger(Clinent.class);
 
-	public static void main(String[] args) {
-		final LinkedList<String> list = new LinkedList<String>();
+	public static void main(String[] args) throws IOException {
+		String ss = DateFormat.getInstance().format(new Date());
+		System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()));
+		System.out.println(ss);
+		//		File file2 = new File(Envm.ROOT.concat("db"));
+		/*final LinkedList<String> list = new LinkedList<String>();
 		list.add("12");
-		for (int i = 0 ; i < 3 ; i ++){
+		LinkedBlockingQueue queue = new LinkedBlockingQueue();
+		queue.add(123);
+		queue.add(3);
+		try {
+			queue.take();
+		} catch (InterruptedException e) {
+		}*/
+		/*for (int i = 0 ; i < 3 ; i ++){
 			Thread thread = new Thread(new Runnable() {
 				
 				@Override
@@ -26,18 +40,6 @@ public class Clinent {
 				}
 			});
 			thread.start();
-		}
-		
-		/*try {
-			throw new NoClassDefFoundError("");
-		} catch (Throwable e) {
-			System.out.println("eee");
-			// TODO: handle exception
-		} 
-		catch (Exception e) {
-			System.out.println("eee");
-			// TODO: handle exception
-		} 
-		LOG.info("333");*/
+		}*/
 	}
 }

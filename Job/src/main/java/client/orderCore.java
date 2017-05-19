@@ -1,5 +1,6 @@
 package client;
 
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -11,20 +12,10 @@ import com.rabbitmq.client.GetResponse;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
 
 import execute.ConsumerMessageHandler;
+import execute.TaskThread.Provider;
 
 public class orderCore implements ConsumerMessageHandler{
 	private static Logger LOG = LoggerFactory.getLogger(orderCore.class);
-
-
-	/*public void consumer(Delivery delivery) throws InterruptedException, ShutdownSignalException, ConsumerCancelledException {
-		String content = new String(delivery.getBody());
-		if (content.equals("erroTest")) {
-			throw new InterruptedException();
-		}
-		print(new String(delivery.getBody()));
-//		System.out.println("consumerMessage:"+new String(delivery.getBody()));
-		
-	}*/
 
 	public void basicAck(Delivery delivery) {
 		// TODO Auto-generated method stub
@@ -42,9 +33,15 @@ public class orderCore implements ConsumerMessageHandler{
 	}
 
 	@Override
-	public boolean consumer(GetResponse response) throws IOException {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean consumer(Provider response) throws IOException {
+		String content = response.getContent();
+		if (content.endsWith("nack")) {
+			return false;
+		} else {
+			print(content);
+			return true;
+		}
 	}
+	
 	
 }

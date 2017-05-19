@@ -7,6 +7,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.GetResponse;
 
 import execute.ConsumerMessageHandler;
+import execute.TaskThread.Provider;
 
 public class orderBase implements ConsumerMessageHandler{
 
@@ -18,7 +19,7 @@ public class orderBase implements ConsumerMessageHandler{
 	}
 
 	@Override
-	public boolean consumer(GetResponse response) throws IOException {
+	public boolean consumer(Provider response) throws IOException {
 		// TODO Auto-generated method stub
 		return false;
 	}

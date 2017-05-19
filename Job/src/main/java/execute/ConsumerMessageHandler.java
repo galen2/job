@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.GetResponse;
+
+import execute.TaskThread.Provider;
 
 public interface ConsumerMessageHandler {
 	
@@ -24,7 +25,7 @@ public interface ConsumerMessageHandler {
 	 * .对实例失败的消息可手动插入数据库或者写本地文件等等,以便后续做补偿处理
 	 * @param delivery
 	 */
-	boolean  consumer(GetResponse response) throws IOException;
+	boolean  consumer(Provider response) throws IOException;
 	
 //	void basicAck(GetResponse response)throws IOException;
 }

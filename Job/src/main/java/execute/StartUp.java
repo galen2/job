@@ -15,8 +15,8 @@ public class StartUp {
 	public static void main(String[] args) {
 		CountDownLatch latch = null;
 		try {
-			addShutDonwHook();
 			LOG.info("starting begined");
+			addShutDonwHook();
 			ArrayList<JobConfig> configs = JobConfig.parseJobConfig();
 			latch = new CountDownLatch(JobConfig.getTotalWorkThreadNum());
 			for (JobConfig config : configs) {
@@ -27,14 +27,17 @@ public class StartUp {
 		} catch (ConfigException e) {
 			latch = null;
 			LOG.error("Invalid config, exiting abnormally", e);
+			System.err.println("Invalid config, exiting abnormally");
             System.exit(1);
 		} catch (StartException e){
 			latch = null;
 			LOG.error("startException, exiting abnormally", e);
+			System.err.println("startException, exiting abnormally");
 			System.exit(1);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			latch = null;
 			LOG.error("Unexpected exception, exiting abnormally", e);
+			System.err.println("Unexpected exception, exiting abnormally");
             System.exit(1);
 		}
 		

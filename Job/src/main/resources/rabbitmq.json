@@ -1,7 +1,7 @@
 {
     "brokerNameOne":{
         "userName":"tonyg",
-        "passsWord":"changeit",
+        "passsWord":"changeit3",
         "virtualHost":"/tonyg",
          "initialSize":"1",
         "maxConnTotal":"2",

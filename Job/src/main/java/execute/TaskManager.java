@@ -59,7 +59,6 @@ public class TaskManager implements Task {
 		try {
 			_handler = (ConsumerMessageHandler) Class.forName(className).newInstance();
 		} catch (InstantiationException |IllegalAccessException |ClassNotFoundException e) {
-			LOG.error("ERROR",e);
 			throw e;
 		}
 	}

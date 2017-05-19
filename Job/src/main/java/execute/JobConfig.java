@@ -1,8 +1,10 @@
 package execute;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Properties;
 
 import com.liequ.rabbitmq.exception.ConfigException;
+import com.liequ.rabbitmq.util.Envm;
 import com.liequ.rabbitmq.util.PropertiesManager;
 
 public class JobConfig {
@@ -59,6 +61,8 @@ public class JobConfig {
 				throw new ConfigException(handler+".autoAck"+" must be seted");
 			}
 			confg.autoAck = Boolean.valueOf(_autoAck);
+			
+			
 			
 			/*String _exclusive = prop.getProperty(handler+".exclusive");
 			if (_exclusive == null){
