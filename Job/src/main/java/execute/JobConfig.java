@@ -1,10 +1,8 @@
 package execute;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Properties;
 
 import com.liequ.rabbitmq.exception.ConfigException;
-import com.liequ.rabbitmq.util.Envm;
 import com.liequ.rabbitmq.util.PropertiesManager;
 
 public class JobConfig {
@@ -12,12 +10,9 @@ public class JobConfig {
 	private String brokerName;
 	private String queueName;
 	private String className;
-//	private boolean queueDurable;
 	private boolean autoAck;
 	private int workThreadNum;
 	private static int totalWorkThreadNum;
-//	private boolean exclusive;
-//	private boolean autoDelete = false;
 
 	public static  ArrayList<JobConfig> parseJobConfig() throws ConfigException{
 		ArrayList<JobConfig> configs = new ArrayList<JobConfig>(4);
@@ -50,11 +45,6 @@ public class JobConfig {
 			}
 			confg.className = cname;
 			
-		/*	String qd = prop.getProperty(handler+".queueDurable");
-			if (qd == null){
-				throw new ConfigException(handler+".queueDurable"+" must be seted");
-			}
-			confg.queueDurable = Boolean.valueOf(qd);*/
 			
 			String _autoAck = prop.getProperty(handler+".autoAck");
 			if (_autoAck == null){
@@ -63,12 +53,6 @@ public class JobConfig {
 			confg.autoAck = Boolean.valueOf(_autoAck);
 			
 			
-			
-			/*String _exclusive = prop.getProperty(handler+".exclusive");
-			if (_exclusive == null){
-				throw new ConfigException(handler+".exclusive"+" must be seted");
-			}
-			confg.exclusive = Boolean.valueOf(_exclusive);*/
 			
 			String _workThreadNum = prop.getProperty(handler+".workThreadNum");
 			if (_workThreadNum == null){
@@ -80,11 +64,6 @@ public class JobConfig {
 		}
 		return configs;
 	}
-
-
-/*	public boolean isExclusive() {
-		return exclusive;
-	}*/
 
 
 	public int getWorkThreadNum() {
@@ -115,15 +94,5 @@ public class JobConfig {
 	public String getClassName() {
 		return className;
 	}
-
-
-	/*public Boolean getQueueDurable() {
-		return queueDurable;
-	}
-
-
-	public boolean isAutoDelete() {
-		return autoDelete;
-	}*/
 	
 }

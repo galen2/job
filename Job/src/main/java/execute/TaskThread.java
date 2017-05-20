@@ -1,33 +1,20 @@
 package execute;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.liequ.rabbitmq.ConnectionManager;
-import com.liequ.rabbitmq.util.Envm;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.GetResponse;
 
-@SuppressWarnings("resource")
 public class TaskThread extends Thread implements Task {
 	private static Logger LOG = LoggerFactory.getLogger(TaskThread.class);
 	private String queueName;
@@ -37,25 +24,23 @@ public class TaskThread extends Thread implements Task {
 	private volatile boolean stop = false;
 	private Channel channel = null;
 	private CountDownLatch _latch = null;
-	private ConnectionManager connectionManager = null;
-	// private AtomicInteger nackNum = new AtomicInteger();
 	private volatile boolean nack = false;
-	private LinkedBlockingQueue<Provider> exceptionMsgQueue = new LinkedBlockingQueue<Provider>();
+	private final ErrorDataCollection _errDataColl;
 
-	// private final Object lockObject = new Object();
-	public TaskThread(ConnectionManager connectionManager, JobConfig _config,
-			ConsumerMessageHandler handler, final CountDownLatch latch) {
-		this.connectionManager = connectionManager;
-		// this.manager = manager;
+	public TaskThread(JobConfig _config, ConsumerMessageHandler handler, final CountDownLatch latch,
+			ErrorDataCollection errDataColl) {
 		this.brokerName = _config.getBrokerName();
 		this.queueName = _config.getQueueName();
 		this.autoAck = _config.isAutoAck();
 		this._handler = handler;
 		this._latch = latch;
+		this._errDataColl = errDataColl;
 	}
 
-	public void init() throws Exception {
-		channel = connectionManager.getChannel(brokerName);
+	public void createChanel() throws Exception {
+		if (channel != null) 
+			channel.close();
+		channel = ConnectionManager.getInstance().getChannel(brokerName);
 		channel.basicQos(1);
 		Map<String, Object> queueArguments = new HashMap<String, Object>();
 		_handler.queueDeclare(channel, queueName, queueArguments);
@@ -63,84 +48,68 @@ public class TaskThread extends Thread implements Task {
 
 	@Override
 	public void startUp() throws Exception {
-		init();
+		createChanel();
 		super.start();
-		initErrorDataCollect();
-	}
-
-	public void initErrorDataCollect() throws IOException {
-		final File file = new File(Envm.ROOT, "errMsg_" + queueName);
-		if (!file.exists()) {
-			file.createNewFile();
-		}
-
-		final BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
-
-		Thread monitor = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					while (!stop) {
-						Provider ed = exceptionMsgQueue.take();
-						bw.append(new SimpleDateFormat(
-								"yyyy-MM-dd HH:mm:ss.SSS").format(new Date()));
-						bw.write(ed.toString());
-						bw.newLine();
-						bw.flush();
-					}
-				} catch (IOException e) {
-					LOG.error("Failed to write new file " + file, e);
-				} catch (InterruptedException e) {
-					LOG.error("InterruptedException ", e);
-					e.printStackTrace();
-				} finally {
-					try {
-						bw.close();
-					} catch (IOException e) {
-					}
-				}
-			}
-		});
-		monitor.setDaemon(true);
-		monitor.start();
 	}
 
 	public void run() {
 
 		while (!stop) {
+			GetResponse response = null;
+			
 			try {
-				GetResponse response = channel.basicGet(queueName, autoAck);
-				if (response == null) {
-					idleWork();
-				} else {
-					Provider provicer = new Provider(queueName, response
-							.getEnvelope().getDeliveryTag(),
-							response.getBody(), response.getProps());
-					if (LOG.isDebugEnabled()) {
-						LOG.debug("fetchMessage {} ", provicer.toString());
-					}
+				response = channel.basicGet(queueName, autoAck);
+			} catch (IOException e) {
+				handlerIOException(e);
+				continue;
+			}
 
-					boolean success = _handler.consumer(provicer);
+			if (response == null) {
+				idleWork();
+			} else {
+				Provider provicer = new Provider(queueName, response.getEnvelope().getDeliveryTag(), response.getBody(),
+						response.getProps());
+				if (LOG.isDebugEnabled()) {
+					LOG.debug("fetchMessage {} ", provicer.toString());
+				}
+				
+				boolean success = true;
+				try {
+					 success = _handler.consumer(provicer);
+				} catch (Throwable e) {
+					// 业务异常如空指针等，记录到文件，自动ACK，保证下面的消息可被消费
+					LOG.error("bussiness exception", e);
+					collectErrorData(provicer);
+				} finally{
 					if (!autoAck) {
-						if (success) {
-							channel.basicAck(response.getEnvelope()
-									.getDeliveryTag(), false);
-						} else {
-							nack = true;
-						}
+						basicAck(success, provicer);
 					}
 				}
-			} catch (IOException io) {
-				LOG.error("exception", io);
-				destory();
-				return;
-			} catch (Throwable e) {
-				LOG.error("Unexpected exception", e);
 			}
 		}
 
 		destory();
+	}
+
+	private void basicAck(boolean success, Provider provicer) {
+		if (success) {
+			try {
+				channel.basicAck(provicer.getMsgTag(), false);
+			} catch (IOException e) {
+				collectErrorData(provicer);
+				handlerIOException(e);
+			}
+		} else {
+			nack = true;
+		}
+	}
+
+	private void handlerIOException(IOException e) {
+		try {
+			createChanel();
+		} catch (Exception e1) {
+			shutDown();
+		}
 	}
 
 	private void idleWork() {
@@ -170,14 +139,20 @@ public class TaskThread extends Thread implements Task {
 		}
 	}
 
+	private void collectErrorData(Provider provicer) {
+		if (provicer != null) {
+			_errDataColl.put(provicer);
+		}
+	}
+
+	
 	public static class Provider {
 		private final String _queueName;
 		private final AMQP.BasicProperties _properties;
 		private final String _content;
 		private final long _msgTag;
 
-		public Provider(String queueName, long msgTag, byte[] body,
-				AMQP.BasicProperties properties) {
+		public Provider(String queueName, long msgTag, byte[] body, AMQP.BasicProperties properties) {
 			_queueName = queueName;
 			_msgTag = msgTag;
 			_content = new String(body);
@@ -203,7 +178,7 @@ public class TaskThread extends Thread implements Task {
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
-			sb.append("Delivery(queueName=").append(_queueName);
+			sb.append("Provider(queueName=").append(_queueName);
 			sb.append(", msgTag=").append(_msgTag);
 			sb.append(", content=").append(_content);
 			sb.append(")");

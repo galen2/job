@@ -12,7 +12,7 @@ public class StartUp {
 	private static Logger LOG = LoggerFactory.getLogger(StartUp.class);
 	private static ArrayList<Task> taskList = new ArrayList<Task>(8);
 
-	public static void main(String[] args) {
+	public  void start(String[] args) {
 		CountDownLatch latch = null;
 		try {
 			LOG.info("starting begined");
